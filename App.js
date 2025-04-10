@@ -1,6 +1,8 @@
-import { View, FlatList, StyleSheet, Text, StatusBar, Image, Button, LayoutAnimation, Platform, UIManager } from 'react-native';
+import { View, FlatList, StyleSheet, Text, StatusBar, Image, Button, LayoutAnimation, Platform, UIManager, TextInput, Switch } from 'react-native';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import React, { useState } from 'react';
+import { Picker } from '@react-native-picker/picker';
+import Slider from '@react-native-community/slider';
 
 const DATA = [
   {
@@ -58,20 +60,18 @@ const DATA2 = [
   },
 ];
 
-
 if (Platform.OS === 'android') {
-  UIManager.setLayoutAnimationEnabledExperimental &&
-    UIManager.setLayoutAnimationEnabledExperimental(true);
+  UIManager.setLayoutAnimationEnabledExperimental && UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-const Card = ({ image, text, expandedData }) => {
+const Card = ({ image, text, expandedData, opacity, fontSize, darkMode, showStats }) => {
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <View style={[styles.card, expanded && { minHeight: 300 }]}>
+    <View style={[styles.card, expanded && { minHeight: 300 }, { opacity }]}> 
       {image && <Image source={{ uri: image }} style={styles.source} />}
       {text && text.map((line, index) => (
-        <Text key={index} style={styles.title}>{line}</Text>
+        <Text key={index} style={[styles.title, { fontSize }]}>{line}</Text>
       ))}
 
       <View style={styles.bt}>
@@ -86,14 +86,14 @@ const Card = ({ image, text, expandedData }) => {
       </View>
 
       {expanded && expandedData && (
-        <View style={styles.extraContent}>
+        <View style={[styles.extraContent, darkMode && { backgroundColor: 'white' }]}>
           <Image
             source={{ uri: expandedData.image }}
             style={styles.expandedImage}
             resizeMode="cover"
           />
-          {expandedData.text.map((line, index) => (
-            <Text key={index} style={styles.expandedText}>{line}</Text>
+          {(showStats ? expandedData.text : expandedData.text.slice(0, 2)).map((line, index) => (
+            <Text key={index} style={[styles.expandedText, darkMode && { color: 'black' }]}>{line}</Text>
           ))}
         </View>
       )}
@@ -102,168 +102,279 @@ const Card = ({ image, text, expandedData }) => {
 };
 
 const Item = ({ title, description }) => {
-  return(
-  <View style={styles.item}>
-    <Text style={styles.text}> {title}</Text>
-    <Text style={styles.descrição}>{description}</Text>
-  </View>
-);
+  return (
+    <View style={styles.item}>
+      <Text style={styles.text}> {title}</Text>
+      <Text style={styles.descrição}>{description}</Text>
+    </View>
+  );
 };
-const App = () => (
-  <SafeAreaProvider style={styles.fundo}>
-    <SafeAreaView style={styles.container}>
-      <FlatList
-        data={DATA}
-        keyExtractor={(item) => item.id}
-        ListHeaderComponent={
-          <>
-            <Text style={styles.headerTitle}>Fla</Text>
-            <Text style={styles.headerTitle2}>App</Text>
-            <Image
-              style={styles.image}
-              source={{ uri: 'https://i.pinimg.com/736x/c7/06/b2/c706b2f7087cc2570cdeabac7e6ca54f.jpg' }}
-            />
-            <Item
-              title="História:"
-              description="O Clube de Regatas do Flamengo, fundado em 17 de novembro de 1895, é um dos maiores e mais populares clubes do Brasil. Inicialmente criado para competições de remo, tornou-se uma potência no futebol, conquistando títulos nacionais e internacionais, incluindo múltiplos Campeonatos Brasileiros e a Copa Libertadores da América. Com uma torcida apaixonada, conhecida como a maior do país, o Flamengo tem como principais cores o vermelho e o preto e manda seus jogos no icônico estádio do Maracanã."
-            />
-          </>
-        }
-        renderItem={({ item }) => {
-          const expandedData = DATA2.find(d => d.id === item.id);
-          return (
-            <Card
-              image={item.image}
-              text={item.text}
-              expandedData={expandedData}
-            />
-          );
-        }}
-      />
-    </SafeAreaView>
-  </SafeAreaProvider>
-);
 
+const App = () => {
+  const [nome, setNome] = useState('');
+  const [tituloFavorito, setTituloFavorito] = useState('');
+  const [mensagem, setMensagem] = useState('');
+  const [sugestao, setSugestao] = useState('');
+  const [decadaFavorita, setDecadaFavorita] = useState('1980');
+  const [competicaoFavorita, setCompeticaoFavorita] = useState('Libertadores');
+  const [customCards, setCustomCards] = useState([]);
+  const [imageOpacity, setImageOpacity] = useState(1);
+  const [textFontSize, setTextFontSize] = useState(16);
+  const [darkModeCard, setDarkModeCard] = useState(false);
+  const [showStats, setShowStats] = useState(true);
 
+  const criarCard = () => {
+    if (nome || tituloFavorito || mensagem || sugestao) {
+      setCustomCards([...customCards, {
+        id: (customCards.length + 100).toString(),
+        image: 'https://i.pinimg.com/originals/f4/d4/6c/f4d46c65ce4911fdc08a2c64d7be7771.jpg',
+        text: [
+          `Títulos favoritos do ${nome}`,
+          `Favorito: ${tituloFavorito}`,
+          `Mensagem: ${mensagem}`,
+          `Futuro: ${sugestao}`,
+          `Década favorita: ${decadaFavorita}`,
+          `Competição favorita: ${competicaoFavorita}`,
+        ],
+      }]);
+      setNome('');
+      setTituloFavorito('');
+      setMensagem('');
+      setSugestao('');
+    }
+  };
+
+  return (
+    <SafeAreaProvider style={styles.fundo}>
+      <SafeAreaView style={styles.container}>
+        <FlatList
+          data={[...customCards, ...DATA]}
+          keyExtractor={(item) => item.id}
+          ListHeaderComponent={
+            <>
+              <Text style={styles.headerTitle}>Fla</Text>
+              <Text style={styles.headerTitle2}>App</Text>
+              <Image
+                style={styles.image}
+                source={{ uri: 'https://i.pinimg.com/736x/c7/06/b2/c706b2f7087cc2570cdeabac7e6ca54f.jpg' }}
+              />
+              <Item
+                title="História:"
+                description="O Clube de Regatas do Flamengo, fundado em 17 de novembro de 1895, é um dos maiores e mais populares clubes do Brasil. Inicialmente criado para competições de remo, tornou-se uma potência no futebol, conquistando títulos nacionais e internacionais, incluindo múltiplos Campeonatos Brasileiros e a Copa Libertadores da América. Com uma torcida apaixonada, conhecida como a maior do país, o Flamengo tem como principais cores o vermelho e o preto e manda seus jogos no icônico estádio do Maracanã."
+              />
+            </>
+          }
+          ListFooterComponent={
+            <View style={styles.inputContainer}>
+              <TextInput style={styles.input} placeholder="Seu nome" placeholderTextColor="white" value={nome} onChangeText={setNome} />
+              <TextInput style={styles.input} placeholder="Título favorito do Flamengo" placeholderTextColor="white" value={tituloFavorito} onChangeText={setTituloFavorito} />
+              <TextInput style={styles.input} placeholder="Mensagem para o Mengão" placeholderTextColor="white" value={mensagem} onChangeText={setMensagem} />
+              <TextInput style={styles.input} placeholder="Sugestão de título futuro" placeholderTextColor="white" value={sugestao} onChangeText={setSugestao} />
+
+              <Text style={styles.label}>Escolha sua década favorita:</Text>
+              <Picker selectedValue={decadaFavorita} style={styles.picker} dropdownIconColor="white" onValueChange={(itemValue) => setDecadaFavorita(itemValue)}>
+                <Picker.Item label="1980" value="1980" />
+                <Picker.Item label="1990" value="1990" />
+                <Picker.Item label="2000" value="2000" />
+                <Picker.Item label="2010" value="2010" />
+                <Picker.Item label="2020" value="2020" />
+              </Picker>
+
+              <Text style={styles.label}>Escolha sua competição favorita:</Text>
+              <Picker selectedValue={competicaoFavorita} style={styles.picker} dropdownIconColor="white" onValueChange={(itemValue) => setCompeticaoFavorita(itemValue)}>
+                <Picker.Item label="Libertadores" value="Libertadores" />
+                <Picker.Item label="Brasileirão" value="Brasileirão" />
+                <Picker.Item label="Copa do Brasil" value="Copa do Brasil" />
+                <Picker.Item label="Mundial" value="Mundial" />
+                <Picker.Item label="Carioca" value="Carioca" />
+              </Picker>
+
+              <Text style={styles.label}>Opacidade da imagem do card:</Text>
+              <Slider
+                style={{ width: '100%', height: 40 }}
+                minimumValue={0.2}
+                maximumValue={1}
+                step={0.05}
+                value={imageOpacity}
+                minimumTrackTintColor="red"
+                maximumTrackTintColor="#000000"
+                onValueChange={setImageOpacity}
+              />
+
+              <Text style={styles.label}>Tamanho da fonte dos títulos:</Text>
+              <Slider
+                style={{ width: '100%', height: 40 }}
+                minimumValue={12}
+                maximumValue={24}
+                step={1}
+                value={textFontSize}
+                minimumTrackTintColor="red"
+                maximumTrackTintColor="#000000"
+                onValueChange={setTextFontSize}
+              />
+
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10 }}>
+                <Text style={styles.label}>Modo escuro no card extra:</Text>
+                <Switch value={darkModeCard} onValueChange={setDarkModeCard} />
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10 }}>
+                <Text style={styles.label}>Mostrar estatísticas detalhadas:</Text>
+                <Switch value={showStats} onValueChange={setShowStats} />
+              </View>
+
+              <View style={styles.createButton}>
+                <Button title="Criar Card Personalizado" onPress={criarCard} color="black" />
+              </View>
+            </View>
+          }
+          renderItem={({ item }) => {
+            const expandedData = DATA2.find(d => d.id === item.id);
+            return <Card image={item.image} text={item.text} expandedData={expandedData} opacity={imageOpacity} fontSize={textFontSize} darkMode={darkModeCard} showStats={showStats} />;
+          }}
+        />
+      </SafeAreaView>
+    </SafeAreaProvider>
+  );
+};
 const styles = StyleSheet.create({
-  fundo: {
-      backgroundColor: 'black',
+  fundo: { 
+    backgroundColor: 'black' 
   },
+
+  container: { 
+    flex: 1, 
+    marginTop: StatusBar.currentHeight || 2 
+  },
+
   bt: {
-    backgroundColor: 'red',
-    borderWidth: 2,
-    borderRadius: 20,
-    borderColor: 'black',
-    alignSelf: 'flex-end',
-    width: 40,
-    marginTop: -113,
+    backgroundColor: 'red', borderWidth: 2, 
+    borderRadius: 20, 
+    borderColor: 'black', 
+    alignSelf: 'flex-end', 
+    width: 40, 
+    marginTop: -113, 
     marginBottom: 0,
   },
-  container: {
-      flex: 1,
-      alignItems: 'center',
 
-    },
-    box: {
-      backgroundColor: 'black',
-
-    },
-    card: {
-      width: "95%",
-      minHeight: 110, 
-      padding: 20,
-      borderRadius: 10,
-      backgroundColor: 'red',
-      marginVertical: 8,
-      marginHorizontal: 13,
-      marginTop: 10,
-      margin: 4,
-    },
-    title: {
-        fontSize: 16,
-        marginBottom: 80,
-        color: 'black',
-        marginLeft: 80,
-        marginTop: -50,
-        fontWeight: 'bold',        
-    },
-    descrição: {
-        fontSize: 14,
-        color: 'black',
-        marginLeft: 4,
-         
-    },
-  text: {
-    fontSize: 18,
-    marginTop: 0,
-    color: 'black',
-    textAlign: 'left',
-    fontWeight: 'bold', 
-    
+  card: {
+    width: "95%", 
+    minHeight: 110, 
+    padding: 20, 
+    borderRadius: 10, 
+    backgroundColor: 'red', 
+    marginVertical: 8, 
+    marginHorizontal: 13, 
+    marginTop: 10, 
+    margin: 4,
   },
-    container: {
-      flex: 1,
-      marginTop: StatusBar.currentHeight || 2,
-    },
-    headerTitle: {
-      backgroundColor: 'black',
-      color: 'red',
-      fontSize: 25,
-      fontWeight: 'bold', 
-      marginLeft: 170,
-    },
-    headerTitle2: {
-      backgroundColor: 'black',
-      color: 'white',
-      fontSize: 25,
-      fontWeight: 'bold', 
-      marginLeft: 204,
-      marginTop: -30,
-    },
-    item: {
-      backgroundColor: 'red',
-      padding: 1,
-      marginVertical: 8,
-      marginHorizontal: 13,
-      alignItems: 'left',
-      width: "95%", 
-      borderRadius: 10, 
-      
-    },
-  
-    image: {
-      width: "95%",
-      height: 305,
-      borderRadius: 40,
-      margin: 10,
-    },
-    source: {
-      width: 70,
-      height: 90,
-      borderRadius: 30,
-      marginTop: -13,
-      marginLeft: -10,
-      
-    },
-    flat: {
-      marginTop: -50,
-    },
-    extraContent: {
-      marginTop: 40,
-      backgroundColor: 'black',
-      padding: 10,
-      borderRadius: 10,
-    },
-    expandedImage: {
-      width: '100%',
-      height: 200,
-      borderRadius: 10,
-      marginBottom: 10,
-    },
-    expandedText: {
-      fontSize: 14,
-      color: 'white',
-    },
+
+  title: {
+    fontSize: 16, 
+    marginBottom: 80, 
+    color: 'black', 
+    marginLeft: 80, 
+    marginTop: -50, 
+    fontWeight: 'bold',
+  },
+
+  descrição: { 
+    fontSize: 14, 
+    color: 'black', 
+    marginLeft: 4 
+  },
+
+  text: { 
+    fontSize: 18, 
+    marginTop: 0, 
+    color: 'black', 
+    textAlign: 'left', 
+    fontWeight: 'bold' 
+  },
+
+  headerTitle: { 
+    backgroundColor: 'black',
+    color: 'red', 
+    fontSize: 25, 
+    fontWeight: 'bold', 
+    marginLeft: 170 
+  },
+
+  headerTitle2: { 
+    backgroundColor: 'black', 
+    color: 'white', 
+    fontSize: 25, 
+    fontWeight: 'bold', 
+    marginLeft: 204, 
+    marginTop: -30 },
+
+  item: {
+    backgroundColor: 'red', 
+    padding: 1, 
+    marginVertical: 8, 
+    marginHorizontal: 13, 
+    alignItems: 'left', 
+    width: "95%", 
+    borderRadius: 10,
+  },
+
+  image: { 
+    width: "95%", 
+    height: 305, 
+    borderRadius: 40, 
+    margin: 10 
+  },
+
+  source: { 
+    width: 70, 
+    height: 90, 
+    borderRadius: 30, 
+    marginTop: -13, 
+    marginLeft: -10 
+  },
+
+  extraContent: { 
+    marginTop: 40, 
+    backgroundColor: 'black', 
+    padding: 10, 
+    borderRadius: 10 },
+  expandedImage: { 
+    width: '100%', 
+    height: 200, 
+    borderRadius: 10, 
+    marginBottom: 10 
+  },
+
+  expandedText: { 
+    fontSize: 14, 
+    color: 'white'
+   },
+  inputContainer: { 
+    padding: 10 
+  },
+  input: { 
+    backgroundColor: '#333', 
+    color: 'white', 
+    padding: 10, 
+    marginVertical: 5, 
+    borderRadius: 10
+   },
+
+  picker: { 
+    color: 'white', 
+    backgroundColor: '#333', 
+    borderRadius: 10, 
+    marginVertical: 5 
+  },
+
+  label: { 
+    color: 'white', 
+    marginTop: 10
+   },
+
+  createButton: { 
+    marginTop: 10, 
+    borderRadius: 10 
+  },
 });
 
 export default App;
